@@ -20,5 +20,3 @@ for i in range(5):
     print(f"Created user -> Username: {username}, Password: {password}")
 
 
-#lipikaaa admin name
-#12187 password
