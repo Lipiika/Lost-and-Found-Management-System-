@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 
+from .forms import LostItemForm
+from .models import LostItem
+
 
 # -------------------------------
 # LOGIN VIEW
@@ -57,31 +60,6 @@ def signup_view(request):
 @login_required
 @user_passes_test(lambda u: not u.is_staff)
 def user_dashboard(request):
-    return render(request, 'system/user_dashboard.html')
-
-
-# -------------------------------
-# ADMIN DASHBOARD
-# -------------------------------
-@login_required
-@user_passes_test(lambda u: u.is_staff)
-def admin_dashboard(request):
-    return render(request, 'system/admin_dashboard.html')
-
-
-# -------------------------------
-# LOGOUT VIEW
-# -------------------------------
-def logout_view(request):
-    logout(request)
-    return redirect('login')
-
-from .forms import LostItemForm
-from .models import LostItem
-
-@login_required
-@user_passes_test(lambda u: not u.is_staff)
-def user_dashboard(request):
     if request.method == 'POST':
         form = LostItemForm(request.POST)
         if form.is_valid():
@@ -92,40 +70,30 @@ def user_dashboard(request):
     else:
         form = LostItemForm()
 
-    items = LostItem.objects.all().order_by('-date_lost')[:10]  # show latest 10
+    items = LostItem.objects.all().order_by('-date_lost')[:10]  # show latest 10 items
     return render(request, 'system/user_dashboard.html', {'form': form, 'items': items})
 
 
-@login_required
-@user_passes_test(lambda u: u.is_staff)
-def admin_dashboard(request):
-    from .models import LostItem
-    from django.contrib.auth.models import User
-
-    users = User.objects.filter(is_staff=False).count()
-    lost_items = LostItem.objects.count()
-    latest_items = LostItem.objects.order_by('-date_lost')[:5]
-
-    context = {
-        'users': users,
-        'lost_items': lost_items,
-        'latest_items': latest_items,
-    }
-    return render(request, 'system/admin_dashboard.html', context)
-
-
-from django.contrib.auth.models import User
-from .models import LostItem
-
+# -------------------------------
+# ADMIN DASHBOARD
+# -------------------------------
 @login_required
 @user_passes_test(lambda u: u.is_staff)
 def admin_dashboard(request):
     user_count = User.objects.filter(is_staff=False).count()
     item_count = LostItem.objects.count()
-    recent_items = LostItem.objects.all().order_by('-date_lost')[:5]
+    recent_items = LostItem.objects.order_by('-date_lost')[:5]
 
     return render(request, 'system/admin_dashboard.html', {
         'user_count': user_count,
         'item_count': item_count,
         'recent_items': recent_items
     })
+
+
+# -------------------------------
+# LOGOUT VIEW
+# -------------------------------
+def logout_view(request):
+    logout(request)
+    return redirect('login')
